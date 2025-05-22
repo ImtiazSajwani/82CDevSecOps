@@ -1,47 +1,76 @@
 pipeline {
     agent any
     
+    environment {
+        SONAR_SCANNER_VERSION = '4.8.0.2856'
+        SONAR_SCANNER_HOME = "${WORKSPACE}/sonar-scanner-${SONAR_SCANNER_VERSION}-linux"
+    }
+    
     stages {
         stage('Checkout') {
             steps {
-                // Clone the repository from GitHub
-                git branch: 'main', url: 'https://github.com/ImtiazSajwani/82CDevSecOps.git'
+                git branch: 'main', url: 'https://github.com/imtiazsjwani/82CDevSecOps.git'
             }
         }
         
         stage('Install Dependencies') {
             steps {
-                // Install npm dependencies
                 sh 'npm install'
             }
         }
         
         stage('Run Tests') {
             steps {
-                // Run the test suite, continue pipeline even if tests fail
                 sh 'npm test || true'
             }
         }
         
         stage('Generate Coverage Report') {
             steps {
-                // Generate code coverage report
                 sh 'npm run coverage || true'
             }
         }
         
         stage('NPM Audit (Security Scan)') {
             steps {
-                // Perform security audit to identify vulnerabilities
                 sh 'npm audit || true'
+            }
+        }
+        
+        stage('SonarCloud Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        # Download SonarScanner CLI
+                        wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                        
+                        # Extract SonarScanner
+                        unzip -q sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                        
+                        # Make SonarScanner executable
+                        chmod +x ${SONAR_SCANNER_HOME}/bin/sonar-scanner
+                        
+                        # Run SonarScanner
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \\
+                            -Dsonar.projectKey=imtiazsjwani_82CDevSecOps \\
+                            -Dsonar.organization=imtiazsjwani \\
+                            -Dsonar.host.url=https://sonarcloud.io \\
+                            -Dsonar.login=${SONAR_TOKEN} \\
+                            -Dsonar.sources=. \\
+                            -Dsonar.exclusions=node_modules/**,test/**,coverage/** \\
+                            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
+                            -Dsonar.projectName="NodeJS Goof Vulnerable App"
+                    '''
+                }
             }
         }
     }
     
     post {
         always {
-            // Archive the test results and reports
             echo 'Pipeline execution completed'
+            // Clean up downloaded files
+            sh 'rm -f sonar-scanner-cli-*.zip'
         }
         success {
             echo 'Pipeline executed successfully'
