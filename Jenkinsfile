@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/imtiazsjwani/82CDevSecOps.git'
+                git branch: 'main', url: 'https://github.com/ImtiazSajwani/82CDevSecOps.git'
             }
         }
         
@@ -52,7 +52,7 @@ pipeline {
                         
                         # Run SonarScanner
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \\
-                            -Dsonar.projectKey=imtiazsjwani_82CDevSecOps \\
+                            -Dsonar.projectKey=ImtiazSajwani_82CDevSecOps \\
                             -Dsonar.organization=imtiazsjwani \\
                             -Dsonar.host.url=https://sonarcloud.io \\
                             -Dsonar.login=${SONAR_TOKEN} \\
@@ -69,7 +69,6 @@ pipeline {
     post {
         always {
             echo 'Pipeline execution completed'
-            // Clean up downloaded files
             sh 'rm -f sonar-scanner-cli-*.zip'
         }
         success {
