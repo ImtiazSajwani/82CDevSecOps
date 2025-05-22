@@ -70,7 +70,7 @@ pipeline {
                         echo "Running SonarCloud analysis with Java 21..."
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \\
                             -Dsonar.projectKey=ImtiazSajwani_82CDevSecOps \\
-                            -Dsonar.organization=imtiazsjwani \\
+                            -Dsonar.organization=imtiazsajwani \\
                             -Dsonar.host.url=https://sonarcloud.io \\
                             -Dsonar.login=${SONAR_TOKEN} \\
                             -Dsonar.sources=. \\
