@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        SONAR_SCANNER_VERSION = '4.7.0.2747'  // Compatible with Java 11
+        SONAR_SCANNER_VERSION = '4.8.0.2856'  // Works with Java 21
         SONAR_SCANNER_HOME = "${WORKSPACE}/sonar-scanner-${SONAR_SCANNER_VERSION}-linux"
     }
     
@@ -45,14 +45,15 @@ pipeline {
                         echo "Java version:"
                         java -version
                         
-                        # Install unzip if not available
-                        if ! command -v unzip &> /dev/null; then
-                            echo "Installing unzip..."
-                            sudo apt-get update -qq
-                            sudo apt-get install -y unzip
+                        # Check if unzip is available
+                        if command -v unzip &> /dev/null; then
+                            echo "unzip is available at: $(which unzip)"
+                        else
+                            echo "ERROR: unzip not found"
+                            exit 1
                         fi
                         
-                        # Download compatible SonarScanner version
+                        # Download SonarScanner
                         echo "Downloading SonarScanner ${SONAR_SCANNER_VERSION}..."
                         wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
                         
@@ -84,8 +85,8 @@ pipeline {
     post {
         always {
             echo 'Pipeline execution completed'
-            sh 'rm -f sonar-scanner-cli-*.zip'
-            sh 'rm -rf sonar-scanner-*/'
+            sh 'rm -f sonar-scanner-cli-*.zip || true'
+            sh 'rm -rf sonar-scanner-*/ || true'
         }
         success {
             echo 'Pipeline executed successfully'
