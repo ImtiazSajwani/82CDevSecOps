@@ -2,8 +2,10 @@ pipeline {
     agent any
     
     environment {
-        SONAR_SCANNER_VERSION = '4.8.0.2856'  // Works with Java 21
+        SONAR_SCANNER_VERSION = '5.0.1.3006'  // Latest version that works with Java 21
         SONAR_SCANNER_HOME = "${WORKSPACE}/sonar-scanner-${SONAR_SCANNER_VERSION}-linux"
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'  // Force Java 21
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
     
     stages {
@@ -41,19 +43,16 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     sh '''
-                        # Check Java version
-                        echo "Java version:"
+                        # Set Java environment explicitly
+                        export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+                        export PATH=$JAVA_HOME/bin:$PATH
+                        
+                        # Verify Java version
+                        echo "System Java version:"
                         java -version
+                        echo "JAVA_HOME: $JAVA_HOME"
                         
-                        # Check if unzip is available
-                        if command -v unzip &> /dev/null; then
-                            echo "unzip is available at: $(which unzip)"
-                        else
-                            echo "ERROR: unzip not found"
-                            exit 1
-                        fi
-                        
-                        # Download SonarScanner
+                        # Download latest SonarScanner
                         echo "Downloading SonarScanner ${SONAR_SCANNER_VERSION}..."
                         wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
                         
@@ -64,8 +63,11 @@ pipeline {
                         # Make SonarScanner executable
                         chmod +x ${SONAR_SCANNER_HOME}/bin/sonar-scanner
                         
-                        # Run SonarScanner
-                        echo "Running SonarCloud analysis..."
+                        # Set SONAR_SCANNER_OPTS to use system Java
+                        export SONAR_SCANNER_OPTS="-Djava.awt.headless=true"
+                        
+                        # Run SonarScanner with explicit Java path
+                        echo "Running SonarCloud analysis with Java 21..."
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \\
                             -Dsonar.projectKey=ImtiazSajwani_82CDevSecOps \\
                             -Dsonar.organization=imtiazsjwani \\
